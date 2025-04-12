@@ -26,8 +26,11 @@ public class ItemMagicoService {
         if (itemMagico.getTipoItem() == EnumItensMagicos.ARMA && itemMagico.getDefesa() > 0){
             throw new Exception("Itens do tipo ARMA não podem ter valores de DEFESA");
         }
-        if(itemMagico.getTipoItem() == EnumItensMagicos.ARMADURA && itemMagico.getDefesa() > 0){
+        if(itemMagico.getTipoItem() == EnumItensMagicos.ARMADURA && itemMagico.getForca() > 0){
             throw new Exception("Itens do tipo ARMADURA não podem ter valores de FORÇA");
+        }
+        if(itemMagico.getTipoItem() == EnumItensMagicos.AMULETO && itemMagico.getForca() + itemMagico.getDefesa() > 10){
+            throw new Exception("Itens só podem ter no maximo 10 pontos atirubuidos");
         }
 
         return repository.save(itemMagico);

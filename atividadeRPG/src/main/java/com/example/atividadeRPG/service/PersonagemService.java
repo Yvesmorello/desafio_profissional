@@ -15,7 +15,7 @@ import java.util.List;
 public class PersonagemService {
 
     @Autowired
-    private PersonagemRepository repository;
+    private PersonagemRepository personagemRepository;
     @Autowired
     private ItemMagicoRepository itemRepository;
 
@@ -24,7 +24,9 @@ public class PersonagemService {
             throw new Exception("A soma dos atributos de Força e Defesa devem ser 10");
         }
 
-        List<ItemMagico> itens = personagem.getItensMagicos();
+        List<Long> idItem = personagem.getItensMagicos().stream().map(ItemMagico::getId).toList();
+        List<ItemMagico> itens = itemRepository.findAllById(idItem);
+
         Long countAmuletos = itens.stream().filter(item -> item.getTipoItem() == EnumItensMagicos.AMULETO).count();
 
         if(countAmuletos > 1){
@@ -42,29 +44,43 @@ public class PersonagemService {
                 throw new Exception("Itens do tipo ARMADURA não podem ter valores de FORÇA");
             }
         }*/
-        return repository.save(personagem);
+
+        personagem.setItensMagicos(itens);
+        return personagemRepository.save(personagem);
     }
 
     public List<Personagem> findAll(){
-        return repository.findAll();
+
+        List<Personagem> personagem = personagemRepository.findAll();
+
+        for(Personagem p : personagem){
+            p.setForca(calculaForcaTotal(p));
+            p.setDefesa(calculaDefesaTotal(p));
+        }
+        return personagem;
     }
 
     public Personagem findById(Long id){
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Personagem não encontrado!"));
+        Personagem personagem =  personagemRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Personagem não encontrado!"));
+
+        personagem.setForca(calculaForcaTotal(personagem));
+        personagem.setDefesa(calculaDefesaTotal(personagem));
+
+        return personagem;
     }
 
     public Personagem updateNomeAventureiro(Long id, Personagem personagem){
-        personagem = findById(id);
-        personagem.setNomeAventureiro(personagem.getNomeAventureiro());
-        return repository.save(personagem);
+        Personagem personagemBanco = personagemRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Personagem não encontrado!"));
+        personagemBanco.setNomeAventureiro(personagem.getNomeAventureiro());
+        return personagemRepository.save(personagemBanco);
     }
 
     public void delete(Long id){
-        repository.deleteById(id);
+        personagemRepository.deleteById(id);
     }
 
     public Personagem addItemMagico(Long personagemId, Long itemMagicoId) throws Exception {
-        Personagem personagem = findById(personagemId);
+        Personagem personagem = personagemRepository.findById(personagemId).orElseThrow(() -> new EntityNotFoundException("Personagem não encontrado!"));
         ItemMagico itemMagico = itemRepository.findById(itemMagicoId).orElseThrow(() -> new EntityNotFoundException("Item não encontrado"));
 
         if(personagem.getItensMagicos().contains(itemMagico)){
@@ -80,7 +96,13 @@ public class PersonagemService {
         }
 
         personagem.getItensMagicos().add(itemMagico);
-        return repository.save(personagem);
+
+       // personagem.setForca(personagem.getForca() + personagem.getItensMagicos().stream().mapToInt(ItemMagico::getForca).sum());
+        //personagem.setDefesa(personagem.getDefesa() + personagem.getItensMagicos().stream().mapToInt(ItemMagico::getDefesa).sum());
+
+       // personagem.setForca(calculaForcaTotal(personagem));
+       // personagem.setDefesa(calculaDefesaTotal(personagem));
+        return personagemRepository.save(personagem);
     }
 
     public Personagem removeItemMagico(Long personagemId, Long itemMagicoId) throws Exception {
@@ -92,7 +114,14 @@ public class PersonagemService {
         }
 
         personagem.getItensMagicos().remove(itemMagico);
-        return repository.save(personagem);
+
+        //personagem.setForca(personagem.getForca() - personagem.getItensMagicos().stream().mapToInt(ItemMagico::getForca).sum());
+       // personagem.setDefesa(personagem.getDefesa() - personagem.getItensMagicos().stream().mapToInt(ItemMagico::getDefesa).sum());
+        int novaForca = calculaForcaTotal(personagem) - itemMagico.getForca();
+        int novaDefesa = calculaDefesaTotal(personagem) - itemMagico.getDefesa();
+
+
+        return personagemRepository.save(personagem);
     }
 
     public ItemMagico findAmuleto(Long personagemId) throws Exception {
@@ -105,5 +134,17 @@ public class PersonagemService {
         Personagem personagem = findById(personagemId);
         List<ItemMagico> itens = personagem.getItensMagicos();
         return itens;
+    }
+
+    private int calculaForcaTotal(Personagem personagem){
+        int forca = personagem.getForca();
+        int forcaItem = personagem.getItensMagicos().stream().mapToInt(ItemMagico::getForca).sum();
+        return forca + forcaItem;
+    }
+
+    private int calculaDefesaTotal(Personagem personagem){
+        int defesa = personagem.getDefesa();
+        int defesaItem = personagem.getItensMagicos().stream().mapToInt(ItemMagico::getDefesa).sum();
+        return defesa + defesaItem;
     }
 }

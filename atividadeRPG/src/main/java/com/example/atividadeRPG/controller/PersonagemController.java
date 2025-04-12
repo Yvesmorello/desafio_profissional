@@ -41,12 +41,12 @@ public class PersonagemController {
         service.delete(id);
     }
 
-    @PutMapping("/{personagemId}/adicionar/itemId")
+    @PutMapping("/{personagemId}/adicionar/{itemId}")
     public Personagem addItem(@PathVariable Long personagemId, @PathVariable Long itemId) throws Exception{
         return service.addItemMagico(personagemId, itemId);
     }
 
-    @PutMapping("/{personagemId}/remover-item/{itemId}")
+    @PutMapping("/{personagemId}/remover/{itemId}")
     public Personagem removerItem(@PathVariable Long personagemId, @PathVariable Long itemId) throws Exception {
         return service.removeItemMagico(personagemId, itemId);
     }

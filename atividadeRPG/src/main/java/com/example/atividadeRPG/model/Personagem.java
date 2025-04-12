@@ -24,7 +24,7 @@ public class Personagem {
     @Enumerated(EnumType.STRING)
     private EnumClasses classe;
     private Integer level;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "personagem_id")
     private List<ItemMagico> itensMagicos = new ArrayList<>();
     private Integer forca;
